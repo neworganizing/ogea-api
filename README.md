@@ -9,7 +9,7 @@ Edit config file to match db settings.
 
 Uncomment all the login required decorators
 
-Set up appropriate settings 
+Set up appropriate settings/uncomment debug = False stuff
 
 Requirements.txt coming soon!
 
