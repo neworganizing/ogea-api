@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Organizer's Guide to Election Adminstration: API</h1>
+<h2>User Guide</h2>
+
+<p>
+<a href="/api/dump">Complete Data Set</a><br><br><br>
+
+To get all data for a specific state, append the state abbreviation to
+the end of the url:<br>
+<a href="/api/NY">http://ogea.neworganizing.com/api/NY</a><br><br><br>
+
+To get the data for a specific question, you may query either by the
+question text or by the question id. Append either to
+/api/question/<br>
+(Note: If you copy and past the question from the site, spaces will be
+automatically converted to '%20', but you will need to
+replace any '?' with '%3F' in the url before searching.)<br>
+<a href="/api/question/What%20ID%20is%20acceptable%3F">http://ogea.neworganizng.com/api/question/What%20ID%20is%20acceptable%3F</a><br>
+<a
+href="/api/question/229">http://ogea.neworganizng.com/api/question/229</a><br>
+<br><br>
+
+If you would like the answer to a specific question for a specific
+state, use the either of the following patterns:<br>
+<a href="/api/NY/What%20ID%20is%20acceptable%3F">http://ogea.neworganizng.com/api/NY/What%20ID%20is%20acceptable%3F</a><br>
+<a
+href="/api/NY/229">http://ogea.neworganizng.com/api/NY/229</a><br>
+<br><br>
+
+Access to our data is free and open to the public, however you will
+need to <a href="http://neworganizing.com">create an account</a> through
+our main site.<br>
+
+If you already have an account, please <a href="/api/login">login</a>
+</p>
+
+<h3>Programmatic Access</h3>
+
+<p>To access via a library such as urllib2:</p>
+
+<p>First you must autenticate and retreive your api token.  A token is valid for one day, after which you must re-authenticate to continue.<p>
+
+<p>To authenticate, issue a http post request to ogea.neworganizing.com/api/login/, with your username and password for neworganizing.com in the post data (fields: username, password).  You must set the Accept header to 'application/json'.</p>
+
+<p>Upon successful authentication, you will receive a json response contiaining your api token.  For all future requests, pass your api token as a query parameter such as ?token=0000000000, and be sure to set the Accept header to 'application/json'.</p>
+
+<p>If you need an account, register at <a href="http://neworganizing.com/accounts/register/">http://neworganizing.com/accounts/register/</a></p>
+{% endblock %}

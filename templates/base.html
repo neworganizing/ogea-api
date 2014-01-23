@@ -1,0 +1,28 @@
+<html>
+  <head>
+    {% if title %}
+    <title>OGEA API - {{title}}</title>
+    {% else %}
+    <title>OGEA API</title>
+    {% endif %}
+  </head>
+  <body>
+    <div>OGEA API:
+      <a href="/api">Home</a>
+      <a href="/api/login">Login</a>
+      <a href="http://neworganizing.com/accounts/register">Register</a>
+      <a href="/api/logout">Logout</a>
+    </div>
+    <hr>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul>
+    {% for message in messages %}
+        <li>{{message}}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </body>
+</html>

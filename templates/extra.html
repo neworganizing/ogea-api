@@ -1,0 +1,6 @@
+
+after main page href
+{% if g.user.is_authenticated() %}
+      | <a href="{{url_for('user', nickname = g.user.nickname) }}">Profile</a>
+      | <a href="{{ url_for('logout') }}">Logout</a>
+      {% endif %}

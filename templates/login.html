@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Welcome to the OGEA API</h1>
+<h2>Please log in:</h2>
+<form action = "" method = "post" name ="login">
+  
+  <p>
+    Username: {{form.username(size=50)}}<br>
+    Password: {{form.password(size=50)}}<br>
+    {% if error %} 
+    <span style="color: red;">[{{error}}]</span>
+    {% endif %}
+  </p>
+  <p><input type="submit" value="Log In"></p>
+  <p><br>If you don't have an account, <a
+href="http://neworganizing.com">sign up</a> on our main site!</p>
+							    
+</form>
+{% endblock %}
