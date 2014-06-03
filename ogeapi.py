@@ -106,7 +106,7 @@ def login_to_noisite(username, password):
     else:
         return True
 
-@app.route('/api/login', methods = ['GET', 'POST'])
+@app.route('/login', methods = ['GET', 'POST'])
 def login():
     form = LoginForm(csrf_enabled=False)
 
@@ -140,53 +140,52 @@ def login():
 
     return render_template('login.html', form=form, title = 'Login')
 
-@app.route('/api/logout')
+@app.route('/logout')
 def logout():    
     flash('You have been logged out')
     session['logged_in'] = False
 
     return redirect(url_for('main'))
 
-@app.route('/api')
-@app.route('/api/')
+@app.route('/')
 def main():
     if session.get('logged_in', False) == False:
        flash('You are not logged in')
     return render_template('main.html')
 
-@app.route('/api/questions/', methods = ['GET'])
+@app.route('/questions/', methods = ['GET'])
 @api_login_required
 def get_questions():
     return json.dumps(questions_sql())
 
-@app.route('/api/question/<int:q_id>', methods = ['GET'])
+@app.route('/question/<int:q_id>', methods = ['GET'])
 @api_login_required
 def get_question_id(q_id):
     return json.dumps(question_id_sql(q_id))
 
-@app.route('/api/question/<path:ques>', methods = ['GET'])
+@app.route('/question/<path:ques>', methods = ['GET'])
 @api_login_required
 def get_question(ques):
     ques = urllib.unquote(ques)
     return json.dumps(question_name_sql(ques))
 
-@app.route('/api/<state>/<int:q_id>', methods = ['GET'])
+@app.route('/<state>/<int:q_id>', methods = ['GET'])
 @api_login_required
 def get_state_question_id(state, q_id):
     return json.dumps(state_question_id_sql(state, q_id))
 
-@app.route('/api/<state>/<path:ques>', methods = ['GET'])
+@app.route('/<state>/<path:ques>', methods = ['GET'])
 @api_login_required
 def get_state_question(state, ques):
     ques = urllib.unquote(ques)
     return json.dumps(state_question_sql(state, ques))
 
-@app.route('/api/<state>', methods = ['GET'])
+@app.route('/<state>', methods = ['GET'])
 @api_login_required
 def get_state(state):
     return json.dumps(state_sql(str(state)))
 
-@app.route('/api/dump', methods = ['GET'])
+@app.route('/dump', methods = ['GET'])
 @api_login_required
 def dump():
     return json.dumps(dump_sql())
