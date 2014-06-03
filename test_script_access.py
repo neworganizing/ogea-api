@@ -1,7 +1,7 @@
 import json
 import urllib2, urllib
 
-auth_url = "http://localhost:5000/api/login"
+auth_url = "http://localhost:5000/login"
 username = raw_input("Enter your NOI username: ")
 password = raw_input("Enter your NOI password: ")
 
@@ -18,7 +18,7 @@ token_data = json.loads(response.read())
 
 print "AUTHENTICATION SUCCESSFUL"
 
-test_url = "http://localhost:5000/api/NY/229?token={0}".format(token_data['token'])
+test_url = "http://localhost:5000/NY/229?token={0}".format(token_data['token'])
 request = urllib2.Request(test_url)
 request.add_header('User-Agent', 'Browser')
 request.add_header('accept', 'application/json')
