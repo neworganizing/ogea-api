@@ -16,7 +16,9 @@ from functools import wraps
 
 from forms import LoginForm
 
-from writeSQL import questions_sql, get_api_token_expiration, insert_api_token, dump_sql, state_sql, question_id_sql, question_name_sql, state_question_id_sql, state_question_sql
+from writeSQL import (questions_sql, get_api_token_expiration, get_api_token,
+                      insert_api_token, dump_sql, state_sql, question_id_sql,
+                      question_name_sql, state_question_id_sql, state_question_sql)
 import config
 
 uuid._uuid_generate_time = None
@@ -51,9 +53,12 @@ def validate_token(token):
     """
     expiration = get_api_token_expiration(token)
 
-    print expiration
+    if expiration:
+        expiration = expiration[0]['expiration']
+    else:
+        return False
 
-    if expiration and expiration[0]['expiration'] > datetime.date.today():
+    if not expiration or expiration >= datetime.date.today():
         return True
 
     return False
@@ -109,15 +114,19 @@ def login():
         return redirect(url_for('main'))
 
     if request.form:
-        logged_in = login_to_noisite(request.form.get('username', None),
-                                     request.form.get('password', None))
+        username = request.form.get('username', None)
+        password = request.form.get('password', None)
+        logged_in = login_to_noisite(username, password)
 
         if logged_in:
             if request.headers.get('accept', None) == 'application/json':
-                token = uuid.uuid4()
-                expiration = datetime.date.today()+timedelta(days=1)
+                # Check if token already exists (i.e. permanent tokens)
+                token = get_api_token(username)
 
-                insert_api_token(token, expiration)
+                if not token:
+                    token = uuid.uuid4()
+                    expiration = datetime.date.today()+timedelta(days=1)
+                    insert_api_token(username, token, expiration)
 
                 return json.dumps({'logged_in':'true', 'token':str(token)})
             else:
