@@ -8,9 +8,6 @@ from flask.ext.wtf import Form
 from wtforms import TextField, PasswordField, validators
 
 sys.path.append("../..")
-#os.environ['DJANGO_SETTINGS_MODULE'] = 'ogea.settings'
-
-#from ogea import settings
 
 import urllib, urllib2, cookielib, uuid, datetime
 from datetime import timedelta
@@ -20,15 +17,15 @@ from functools import wraps
 from forms import LoginForm
 
 from writeSQL import questions_sql, get_api_token_expiration, insert_api_token, dump_sql, state_sql, question_id_sql, question_name_sql, state_question_id_sql, state_question_sql
-from config import s_key
+import config
 
 uuid._uuid_generate_time = None
 uuid._uuid_generate_random = None
 
 app = Flask(__name__)
-app.secret_key = s_key
+app.secret_key = config.s_key
 
-#TODO: ADD LOGIN REQ AGAIN, SET SETTIINGS 
+#TODO: ADD LOGIN REQ AGAIN, SET SETTINGS
 if __name__ == "__main__" and __package__ is None:
     __package__ = "ogea.api"
 
@@ -74,15 +71,18 @@ def login_to_noisite(username, password):
     confirmation.
     """
 
+    if config.DEBUG:
+        return True
+
     cj = cookielib.CookieJar()
     opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
     urllib2.install_opener(opener)
 
-    login_url = 'http://{0}/accounts/login/'.format(settings.NOISITE_DOMAIN)
+    login_url = 'http://{0}/accounts/login/'.format(config.NOISITE_DOMAIN)
 
     request = urllib2.Request(login_url)
     request.add_header('User-Agent', 'Browser')
-
+ 
     response = urllib2.urlopen(request)
     html = response.read()
 
@@ -146,39 +146,39 @@ def main():
     return render_template('main.html')
 
 @app.route('/api/questions/', methods = ['GET'])
-#@api_login_required
+@api_login_required
 def get_questions():
     return json.dumps(questions_sql())
 
 @app.route('/api/question/<int:q_id>', methods = ['GET'])
-#@api_login_required
+@api_login_required
 def get_question_id(q_id):
     return json.dumps(question_id_sql(q_id))
 
 @app.route('/api/question/<path:ques>', methods = ['GET'])
-#@api_login_required
+@api_login_required
 def get_question(ques):
     ques = urllib.unquote(ques)
     return json.dumps(question_name_sql(ques))
 
 @app.route('/api/<state>/<int:q_id>', methods = ['GET'])
-#@api_login_required
+@api_login_required
 def get_state_question_id(state, q_id):
     return json.dumps(state_question_id_sql(state, q_id))
 
 @app.route('/api/<state>/<path:ques>', methods = ['GET'])
-#@api_login_required
+@api_login_required
 def get_state_question(state, ques):
     ques = urllib.unquote(ques)
     return json.dumps(state_question_sql(state, ques))
 
 @app.route('/api/<state>', methods = ['GET'])
-#@api_login_required
+@api_login_required
 def get_state(state):
     return json.dumps(state_sql(str(state)))
 
 @app.route('/api/dump', methods = ['GET'])
-#@api_login_required
+@api_login_required
 def dump():
     return json.dumps(dump_sql())
 
@@ -191,9 +191,9 @@ def handler_401(error):
 if not app.debug:
     import logging
     from logging.handlers import RotatingFileHandler
-    #file_handler = RotatingFileHandler(settings.API_LOG_PATH+'ogeapi.log')
-    #file_handler.setLevel(logging.WARNING)
-    #app.logger.addHandler(file_handler)
+    file_handler = RotatingFileHandler(config.API_LOG_PATH+'ogeapi.log')
+    file_handler.setLevel(logging.WARNING)
+    app.logger.addHandler(file_handler)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=config.DEBUG)

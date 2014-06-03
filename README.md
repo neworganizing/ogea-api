@@ -7,9 +7,7 @@ Before using:
 Edit config file to match db settings. 
 (Rename as config, not config_template)
 
-Uncomment all the login required decorators
+Set DEBUG = True to disable authentication and turn on Flask's debug mode.
 
-Set up appropriate settings/uncomment debug = False stuff
-
-Requirements.txt coming soon!
+NOISITE_DOMAIN points to the Django website to be used for validating authentication credentials (i.e. neworganizing.com)
 
