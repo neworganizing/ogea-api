@@ -62,7 +62,7 @@ def get_api_token(username):
     result = cur.fetchone()
 
     # is it stale?
-    if result[2] and result[2] < datetime.date.today():
+    if result and result[2] and result[2] < datetime.date.today():
         # Remove old token
         cur.execute("delete from ogea_apikey where username='{0}'".format(username))
         return None

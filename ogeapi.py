@@ -119,7 +119,11 @@ def login():
         logged_in = login_to_noisite(username, password)
 
         if logged_in:
-            if request.headers.get('accept', None) == 'application/json':
+            accept_header = request.headers.get('accept', None)
+            if not accept_header:
+                accept_header = request.headers.get('Accept', None)
+
+            if accept_header and accept_header == 'application/json':
                 # Check if token already exists (i.e. permanent tokens)
                 token = get_api_token(username)
 
