@@ -1,24 +1,30 @@
-import json #psycopg2
-import sys,os,os.path
+import json  # psycopg2
+import sys
+# from os import path
 
-from flask import Flask, jsonify, abort, make_response, g, abort, Response
+from flask import Flask, Response
 from flask import request, session, redirect, url_for, render_template, flash
-
-from flask.ext.wtf import Form
-from wtforms import TextField, PasswordField, validators
+from flask.ext.sqlalchemy import SQLAlchemy
+# from flask.ext.wtf import Form
+# from wtforms import TextField, PasswordField, validators
 
 sys.path.append("../..")
 
-import urllib, urllib2, cookielib, uuid, datetime
+import urllib
+import urllib2
+import cookielib
+import uuid
+import datetime
 from datetime import timedelta
-from bs4 import BeautifulSoup 
+from bs4 import BeautifulSoup
 from functools import wraps
 
 from forms import LoginForm
 
 from writeSQL import (questions_sql, get_api_token_expiration, get_api_token,
                       insert_api_token, dump_sql, state_sql, question_id_sql,
-                      question_name_sql, state_question_id_sql, state_question_sql)
+                      question_name_sql, state_question_id_sql,
+                      state_question_sql)
 import config
 
 uuid._uuid_generate_time = None
@@ -26,20 +32,56 @@ uuid._uuid_generate_random = None
 
 app = Flask(__name__)
 app.secret_key = config.s_key
+app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
+db = SQLAlchemy(app)
 
-#TODO: ADD LOGIN REQ AGAIN, SET SETTINGS
+# TODO: ADD LOGIN REQ AGAIN, SET SETTINGS
 if __name__ == "__main__" and __package__ is None:
     __package__ = "ogea.api"
+
+
+class Request(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(1000))
+    params = db.Column(db.String(1000))
+    url = db.Column(db.String(1000))
+    ip = db.Column(db.String(15))
+    timestamp = db.Column(db.DateTime)
+
+
+def record_action(request):
+    token = request.args.get('token')
+    params = request.data
+    url = request.url
+    timestamp = datetime.datetime.now()
+    ip = request.remote_addr
+
+    r = Request(
+        token=token,
+        params=params,
+        url=url,
+        timestamp=timestamp,
+        ip=ip
+    )
+
+    db.session.add(r)
+    db.session.commit()
+
+    print "Request: ", url, params, token, timestamp, ip
+
 
 def api_login_required(view):
     @wraps(view)
     def decorated_view(*args, **kwargs):
         if request.headers.get('accept', None) == 'application/json':
             if not validate_token(request.args.get('token')):
-                return json.dumps({'error': 'Invalid token, please login to retrieve a valid token.'})
+                return json.dumps(
+                    {'error': '''
+                        Invalid token, please login to retrieve a valid token.
+                    '''})
         else:
-            #if not (g.user and g.user.is_authenticated()):
-            if session.get('logged_in', False) == False:
+            # if not (g.user and g.user.is_authenticated()):
+            if not session.get('logged_in', False):
                 flash('You must be logged in to access this resource.')
                 return redirect(url_for('login', next=request.url))
 
@@ -47,9 +89,10 @@ def api_login_required(view):
 
     return decorated_view
 
+
 def validate_token(token):
     """
-    Checks if the token is in the database, and that the 
+    Checks if the token is in the database, and that the
     """
     expiration = get_api_token_expiration(token)
 
@@ -62,6 +105,7 @@ def validate_token(token):
         return True
 
     return False
+
 
 def login_to_noisite(username, password):
     """
@@ -87,16 +131,23 @@ def login_to_noisite(username, password):
 
     request = urllib2.Request(login_url)
     request.add_header('User-Agent', 'Browser')
- 
+
     response = urllib2.urlopen(request)
     html = response.read()
 
     doc = BeautifulSoup(html)
 
-    csrf_input = doc.find(attrs = dict(name = 'csrfmiddlewaretoken'))
+    csrf_input = doc.find(attrs=dict(name='csrfmiddlewaretoken'))
     csrf_token = csrf_input['value']
 
-    params = urllib.urlencode(dict(username=username, password=password, csrfmiddlewaretoken = csrf_token))
+    params = urllib.urlencode(
+        dict(
+            username=username,
+            password=password,
+            csrfmiddlewaretoken=csrf_token
+        )
+    )
+
     request.data = params
 
     response = urllib2.urlopen(request)
@@ -106,11 +157,12 @@ def login_to_noisite(username, password):
     else:
         return True
 
-@app.route('/login', methods = ['GET', 'POST'])
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm(csrf_enabled=False)
 
-    if session.get('logged_in', False) == True:
+    if session.get('logged_in', False):
         return redirect(url_for('main'))
 
     if request.form:
@@ -132,73 +184,95 @@ def login():
                     expiration = datetime.date.today()+timedelta(days=1)
                     insert_api_token(username, token, expiration)
 
-                return json.dumps({'logged_in':'true', 'token':str(token)})
+                return json.dumps({'logged_in': 'true', 'token': str(token)})
             else:
                 session['logged_in'] = True
                 return redirect(request.args.get('next') or url_for('main'))
         else:
             if request.headers['accept'] == 'application/json':
-                return json.dumps({'logged_in':'false'})
+                return json.dumps({'logged_in': 'false'})
             else:
                 flash('Failed to login.')
 
-    return render_template('login.html', form=form, title = 'Login')
+    return render_template('login.html', form=form, title='Login')
+
 
 @app.route('/logout')
-def logout():    
+def logout():
     flash('You have been logged out')
     session['logged_in'] = False
 
     return redirect(url_for('main'))
 
+
 @app.route('/')
 def main():
-    if session.get('logged_in', False) == False:
-       flash('You are not logged in')
+    if not session.get('logged_in', False):
+        flash('You are not logged in')
     return render_template('main.html')
 
-@app.route('/questions/', methods = ['GET'])
+
+@app.route('/questions/', methods=['GET'])
 @api_login_required
 def get_questions():
+    record_action(request)
     return json.dumps(questions_sql())
 
-@app.route('/question/<int:q_id>', methods = ['GET'])
+
+@app.route('/question/<int:q_id>', methods=['GET'])
 @api_login_required
 def get_question_id(q_id):
+    record_action(request)
     return json.dumps(question_id_sql(q_id))
 
-@app.route('/question/<path:ques>', methods = ['GET'])
+
+@app.route('/question/<path:ques>', methods=['GET'])
 @api_login_required
 def get_question(ques):
+    record_action(request)
     ques = urllib.unquote(ques)
     return json.dumps(question_name_sql(ques))
 
-@app.route('/<state>/<int:q_id>', methods = ['GET'])
+
+@app.route('/<state>/<int:q_id>', methods=['GET'])
 @api_login_required
 def get_state_question_id(state, q_id):
+    record_action(request)
     return json.dumps(state_question_id_sql(state, q_id))
 
-@app.route('/<state>/<path:ques>', methods = ['GET'])
+
+@app.route('/<state>/<path:ques>', methods=['GET'])
 @api_login_required
 def get_state_question(state, ques):
+    record_action(request)
     ques = urllib.unquote(ques)
     return json.dumps(state_question_sql(state, ques))
 
-@app.route('/<state>', methods = ['GET'])
+
+@app.route('/<state>', methods=['GET'])
 @api_login_required
 def get_state(state):
+    record_action(request)
     return json.dumps(state_sql(str(state)))
 
-@app.route('/dump', methods = ['GET'])
+
+@app.route('/dump', methods=['GET'])
 @api_login_required
 def dump():
+    record_action(request)
     return json.dumps(dump_sql())
+
 
 @app.errorhandler(401)
 def handler_401(error):
-    return Response('Error: Unauthorized API Access Attempt', 401, {'WWWAuthenticate':'Basic realm="Login Required"'})
+    return Response(
+        'Error: Unauthorized API Access Attempt',
+        401,
+        {'WWWAuthenticate': 'Basic realm="Login Required"'}
+    )
 
-#topic/subtopic at some later date
+
+# topic/subtopic at some later date
 
 if not app.debug:
     import logging

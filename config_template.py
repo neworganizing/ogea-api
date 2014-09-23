@@ -11,5 +11,7 @@ NOI_SITE_DOMAIN = ''
 # Location of log
 API_LOG_PATH = ''
 
-#For easy generation use os.urandom(<int>)
-s_key =  ''
+# For easy generation use os.urandom(<int>)
+s_key = ''
+
+SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/test.db'

@@ -1,17 +1,17 @@
 <html>
   <head>
     {% if title %}
-    <title>OGEA API - {{title}}</title>
+    <title>Electionary API - {{title}}</title>
     {% else %}
-    <title>OGEA API</title>
+    <title>Electionary API</title>
     {% endif %}
   </head>
   <body>
-    <div>OGEA API:
-      <a href="/api">Home</a>
-      <a href="/api/login">Login</a>
+    <div>Electionary API:
+      <a href="">Home</a>
+      <a href="login">Login</a>
       <a href="http://neworganizing.com/accounts/register">Register</a>
-      <a href="/api/logout">Logout</a>
+      <a href="logout">Logout</a>
     </div>
     <hr>
     {% with messages = get_flashed_messages() %}

@@ -1,6 +1,6 @@
-OGEA API
+Electionary API
 
-Flask API on top of OGEA database. 
+Flask API on top of Electionary database. 
 
 Before using:
 
